@@ -23,7 +23,6 @@
     loginButtons();
     ?>
 
-   
     </div>
     </main>
 
@@ -40,19 +39,17 @@
 function loginButtons(){
 
     if( isset($_POST['userNameLogin']) ){
-        echo "1";
         login();
+        return true;
     }else if( isset($_POST['userNameSignIn']) ){
-        echo "2";
         signIn();
+        return true;
     }else if(isset($_POST['signInForm'])   ){ 
-        echo "3";
         showSignInForm();
-        
+        return true;
     }else if( isset($_POST['loginForm']) ){ 
-        echo "4";
         showLoginForm();
-       
+        return true;
     }else{ 
         showButtons();
     }
@@ -69,7 +66,7 @@ function login(){
 
         if($userExist){
             createSession($userName);
-            redirectHome();
+            #redirectHome();
     }else{
         showFailedLoginForm();   
     }
@@ -79,7 +76,6 @@ function login(){
 }
 
 function signIn(){
-    echo "crear";
     if(isset( $_POST['userNameSignIn']) ){
 
         $userName = $_POST['userNameSignIn'];
@@ -88,30 +84,33 @@ function signIn(){
         $userExist = checkUserFile($userName); 
 
         if($userExist){
-            showLogInMessage(); //check if works
-            createSession($userName);  
-            redirectHome();
-    }else{
-       
+            showLogInMessage($userName); // change the logic of the msg
+            createSession($userName); 
+            #redirectHome();
+        }else{
        createUser($userName, $userPassword); 
        createSession($userName); 
-       redirectHome();
-    }
+      # redirectHome();
+        }
     }else{
         showFailedSignInForm(); 
-        showSignInMessage(); //check if works
+        showSignInMessage($userName); // change the logic of the msg
     }
 }
 
-function checkUserFile($userName){ //check if works
+function checkUserFile($userName){ 
 
-    $usersFile = fopen('./users/usersFile.txt','wr');
+    $usersFile = fopen('./users/usersFile.txt','w') or die("Unable to open file!");
+    fclose($usersFile);
+    
+    $usersFile = fopen('./users/usersFile.txt','r') or die("Unable to open file!");
     while(!feof($usersFile)){
-        $entry_array = fgets($usersFile); //
-        if( preg_match('/\b' . $userName .  '\b+/', $entry_array)){
+        $entry_array = fgets($usersFile); 
+        if(strpos($entry_array, $userName) !== false ){
             fclose($usersFile);
             return true;
         }
+        
     }
 
     fclose($usersFile);
@@ -119,35 +118,36 @@ function checkUserFile($userName){ //check if works
     }
     
 
-function createSession($userName){ //check if works
+function createSession($userName){ 
     session_start();
     $_SESSION["userName"] = $userName;
-    
+    echo  $_SESSION["userName"];
 }
 
-function  createUser($userName, $userPassword){ //check if works
+function  createUser($userName, $userPassword){ 
     echo ($userName . $userPassword);
-    $data = str_pad(($userName . $userPassword),40," ");
-    $wasUploadedSuccessfully = file_put_contents("users/usersFile.txt",$data,FILE_APPEND | LOCK_EX);
+    $data = str_pad( ($userName . ',' . $userPassword),40," ");
+    $wasUploadedSuccessfully = file_put_contents("./users/usersFile.txt" ,$data, FILE_APPEND | LOCK_EX);
     if ($wasUploadedSuccessfully === false){
         echo "There was an error writing in index.txt file";
     }
     else{
-        //echo $wasUploadedSuccessfully;
+       
     }
 }
 
 
-function showLogInMessage(){ //check if works
-    echo "Loggin in " . $_POST['userNamesignIn'] . "</br>";
+function showLogInMessage($userName){ //check if works
+    echo "User already exists </br>";
+    echo "Loggin in <b>" . $userName . "</b></br>";
     echo "Redirecting...";
-    sleep(1,5);
+
 }
 
-function showSignInMessage(){ //check if works
-    echo "Signing in " . $_POST['userNamesignIn'] . "</br>";
+function showSignInMessage($userName){ //check if works
+    echo "Signing in " . $userName . "</br>";
     echo "Redirecting...";
-    sleep(1,5);
+
 }
 
 function redirectHome(){
@@ -168,14 +168,14 @@ function showButtons(){
     <td>  
     <form action="login.php" method="post"> 
     <input type="hidden" value="true" name="loginForm" id="loginForm"> 
-    <input type="submit" value="Login"> 
+    <input class="loginButton" type="submit" value="Login"> 
     </form>
     </td>
 
     <td>  
     <form action="login.php" method="post"> 
     <input type="hidden" value="true" name="signInForm" id="signInForm"> 
-    <input type="submit" value="Sign In"> 
+    <input class="loginButton" type="submit" value="Sign In"> 
     </form>
     <td>
     </tr>

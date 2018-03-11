@@ -9,9 +9,6 @@
         if(isFileSubmitted()){
              saveFileInformation();
         }
-        else{
-            echo "no se ha mandado el file";
-        }
     }
 
     function isFileSubmitted(){
@@ -24,11 +21,19 @@
             $file_info = getConcatenatedFileInformationByCommasAsString($file_path);
             $file_txt_path = getUserPath() . "\\" . USER_INFORMATION_FILE;
             $position_file_info = getSavedInformationPosition($file_txt_path,$file_info);
-            echo $position_file_info;    
+            $index_file_info_data = $_FILES['userfile']['name'] . "," . $position_file_info;
+            insertIndexintoFile($index_file_info_data);
         }
         else{
             echo "no se pudo mover";
         }
+    }
+
+    function insertIndexintoFile($data){
+        $data = str_pad($data,40," ");
+        $file_path = getUserPath() . "\\" . INDEX_USER_INFORMATION_FILE;
+        $indexWasSavedSuccessfully   = file_put_contents($file_path,$data,FILE_APPEND | LOCK_EX);
+        return ($indexWasSavedSuccessfully)? true : false;
     }
 
     function getCurrentUserName(){
@@ -80,7 +85,10 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title></title>
+        <meta charset="utf-8">
+        <title>PHP File Management</title>
+        <link rel="stylesheet" href="styles/style.css">
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300|Sonsie+One" rel="stylesheet" type="text/css">
     </head>
     <body>
         <header>

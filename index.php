@@ -81,6 +81,19 @@
         $file_info = "$name,$author,$description,$clasification,$size,$date," . $file_path;
         return $file_info;
     }
+
+    function showUserFiles(){
+        $directory_path = getFilePath();
+        $user_file_directory = opendir($directory_path);
+        echo $user_file_directory;
+        echo "<table>";
+        if($user_file_directory){
+            while (false !== ($file = readdir($user_file_directory))){
+                echo "<td><tr>$file</tr></td></br>";
+            }
+        }
+        echo "</table>";
+    }
 ?>
 <!DOCTYPE html>
 <html>
@@ -115,7 +128,9 @@
                 </form>
             </section>
             <section id="show-files">
-
+                <?php
+                    showUserFiles();
+                ?>
             </section>
         </main>
         <footer></footer>

@@ -66,7 +66,7 @@ function login(){
 
         if($userExist){
             createSession($userName);
-            #redirectHome();
+            redirectHome();
     }else{
         showFailedLoginForm();   
     }
@@ -86,11 +86,11 @@ function signIn(){
         if($userExist){
             showLogInMessage($userName); // change the logic of the msg
             createSession($userName); 
-            #redirectHome();
+            redirectHome();
         }else{
        createUser($userName, $userPassword); 
        createSession($userName); 
-      # redirectHome();
+       redirectHome();
         }
     }else{
         showFailedSignInForm(); 
@@ -151,7 +151,7 @@ function showSignInMessage($userName){ //check if works
 }
 
 function redirectHome(){
-    $location = "./home.php";
+    $location = "./index.php";
     redirect( $location);
 }
 

@@ -1,4 +1,5 @@
 <?php
+    @session_start();
     define("USERNAME","omarseguvi");
     define("USER_INFORMATION_FILE","user_info_file.txt");
     define("INDEX_USER_INFORMATION_FILE","index_user_info_file.txt");
@@ -37,7 +38,23 @@
     }
 
     function getCurrentUserName(){
-        return USERNAME;
+        if ( isset($_SESSION['userName']) ){
+            $userName =  $_SESSION["userName"] ;
+            return $userName;
+        }else{
+            redirectUnauthorized();
+        } 
+    }
+
+    function redirectUnauthorized(){
+        $location = "./unauthorized.php";
+        redirect( $location);
+    }
+    
+    function redirect($url, $statusCode = 303)
+    {
+       header('Location: ' . $url, true, $statusCode);
+       die();
     }
 
     function getFilePath(){

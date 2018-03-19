@@ -6,6 +6,27 @@
 
     init();
 
+    function getCurrentUserName(){
+        if ( isset($_SESSION['userName']) ){
+            $userName =  $_SESSION["userName"] ;
+            return $userName;
+        }else{
+            redirectUnauthorized();
+        } 
+    }
+
+    function redirectUnauthorized(){
+        $location = "./unauthorized.php";
+        redirect( $location);
+    }
+    
+    function redirect($url, $statusCode = 303)
+    {
+       header('Location: ' . $url, true, $statusCode);
+       die();
+    }
+
+
     function init(){
         if(isFileSubmitted()){
              saveFileInformation();
@@ -35,26 +56,6 @@
         $file_path = getUserPath() . "\\" . INDEX_USER_INFORMATION_FILE;
         $indexWasSavedSuccessfully   = file_put_contents($file_path,$data,FILE_APPEND | LOCK_EX);
         return ($indexWasSavedSuccessfully)? true : false;
-    }
-
-    function getCurrentUserName(){
-        if ( isset($_SESSION['userName']) ){
-            $userName =  $_SESSION["userName"] ;
-            return $userName;
-        }else{
-            redirectUnauthorized();
-        } 
-    }
-
-    function redirectUnauthorized(){
-        $location = "./unauthorized.php";
-        redirect( $location);
-    }
-    
-    function redirect($url, $statusCode = 303)
-    {
-       header('Location: ' . $url, true, $statusCode);
-       die();
     }
 
     function getFilePath(){
@@ -102,11 +103,12 @@
     function showUserFiles(){
         $directory_path = getFilePath();
         $user_file_directory = opendir($directory_path);
-        echo $user_file_directory;
         echo "<table>";
         if($user_file_directory){
             while (false !== ($file = readdir($user_file_directory))){
-                echo "<td><tr>$file</tr></td></br>";
+                if ($file != "." && $file != "..") {
+                    echo "<td><tr>$file</tr></td></br>";
+                }
             }
         }
         echo "</table>";
@@ -118,11 +120,13 @@
         <meta charset="utf-8">
         <title>PHP File Management</title>
         <link rel="stylesheet" href="styles/style.css">
-        <link href="https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300|Sonsie+One" rel="stylesheet" type="text/css">
+        <link href="https://fonts.googleapis.com/css?family=Nunito" rel="stylesheet">
     </head>
     <body>
-        <header>
+        <header class="main-title">
             <h1>PHP File Management</h1>
+        </header>
+        <main id="main-index">
             <nav>
                 <ul>
                     <li><a href="#">Home</a></li>
@@ -130,25 +134,27 @@
                     <li><a href="#">About</a></li>
                 </ul>
             </nav>
-        <header>
-        <main>
-            <section id="save-file">
-                <form enctype="multipart/form-data" method="post" action="index.php">
-                    <label for="author">Author</label>
-                    <input type="text" id="author" name="author">
-                    <label for="description">Description</label>
-                    <input type="text" id="description" name="description">
-                    <label for="clasification">Clasification</label>
-                    <input type="text" id="clasification" name="clasification">
-                    Add file:<input name="userfile" type="file"/> <br/>
-                    <input type="submit" value="Save" />
-                </form>
-            </section>
-            <section id="show-files">
-                <?php
-                    showUserFiles();
-                ?>
-            </section>
+            <div class="content">
+                <section id="save-file">
+                    <form enctype="multipart/form-data" method="post" action="index.php">
+                        <label for="author">Author</label>
+                        <input type="text" id="author" name="author">
+                        <label for="description">Description</label>
+                        <input type="text" id="description" name="description">
+                        <label for="clasification">Clasification</label>
+                        <input type="text" id="clasification" name="clasification">
+                        <label for="userfile">Add file</label>
+                        <input name="userfile" type="file" id="userfile"/> <br/>
+                        <input type="submit" value="Save" />
+                    </form>
+                </section>
+                <aside id="show-files">
+                    <p>Saved Files</p>
+                    <?php
+                        showUserFiles();
+                    ?>
+                </aside>
+            </div>
         </main>
         <footer></footer>
     </body>

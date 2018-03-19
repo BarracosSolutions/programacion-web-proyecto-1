@@ -1,6 +1,66 @@
+body {
+  font-family: 'Nunito', sans-serif;
+  background-color: #204c57;
+  color: #b2ced9;
+  padding: 0;
+  margin: 0; }
+
+.main-title {
+  text-align: center; }
+  .main-title h1 {
+    margin-bottom: 1%; }
+
+#main-index nav {
+  background-color: #13393D; }
+  #main-index nav ul {
+    margin-top: 1%;
+    padding: 0;
+    list-style-type: none; }
+  #main-index nav li {
+    display: inline;
+    text-align: center; }
+  #main-index nav a {
+    text-decoration: none;
+    color: #6ea3b8; }
+
+.content {
+  display: flex; }
+  .content section {
+    width: 60%; }
+  .content aside {
+    width: 40%; }
+
+#save-file {
+  padding: 2%; }
+  #save-file form {
+    margin: 0 auto; }
+  #save-file label {
+    display: block; }
+  #save-file input[type=text] {
+    width: 80%;
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box; }
+  #save-file input[type=submit] {
+    width: 80%;
+    background-color: #13393D;
+    color: #6ea3b8;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer; }
+  #save-file input[type=submit]:hover {
+    background-color: #13393D; }
+
+#show-files p {
+  margin-top: 0;
+  margin-bottom: 1%; }
+
+/*# sourceMappingURL=style.css.map */
+
 /* || General setup */
 
-html, body {
+/* html, body {
   margin: 0;
   padding: 0;
 }
@@ -11,19 +71,18 @@ html {
 }
 
 body {
+  font-family: 'Nunito', sans-serif;
   width: 70%;
   margin: 0 auto;
-}
+} */
 
 /* || typography */
 
-h1, h2, h3 {
-  font-family: 'Sonsie One', cursive;
+/* h1, h2, h3 {
   color: #2a2a2a;
 }
 
 p, input, li {
-  font-family: 'Open Sans Condensed', sans-serif;
   color: #2a2a2a;
 }
 
@@ -46,11 +105,11 @@ h3 {
 p, li {
   font-size: 1.6rem;
   line-height: 1.5;
-}
+} */
 
 /* || header layout */
 
-nav, article, aside, footer {
+/* nav, article, aside, footer {
   background-color: white;
   padding: 1%;
 }
@@ -106,22 +165,22 @@ input[type="submit"] {
   background: #333;
   border: 0;
   color: white;
-}
+} */
 
 /* || main layout */
 
-main {
+/* main {
   display: flex;
-}
+} */
 
-article {
+/* article {
   flex: 4;
 }
 
 footer {
   margin-top: 10px;
-}
-
+} */
+ 
 .loginTable{
   font-size: 2em;
 }

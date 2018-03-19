@@ -4,23 +4,21 @@
     <meta charset="utf-8">
 
     <title>PHP File Management</title>
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300|Sonsie+One" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Nunito" rel="stylesheet">
     <link rel="stylesheet" href="styles/style.css">
 
   </head>
 
   <body>
 
-    <header>
+    <header class="main-title">
       <h1>PHP File Management login</h1>
-
     </header>
     <main>
     <div class="loginDiv">
     
     <?php
-
-    loginButtons();
+        loginButtons();
     ?>
 
     </div>

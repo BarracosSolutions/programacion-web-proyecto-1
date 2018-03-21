@@ -1,6 +1,7 @@
 <?php
 define("USER_FILE","./users/usersFile.txt", true);
 define("INDEX_USER_FILE","./users/indexUsersFile.txt", true);
+$indexUserFilesArray = array();
 ?>
 
 <!DOCTYPE html>
@@ -40,7 +41,7 @@ define("INDEX_USER_FILE","./users/indexUsersFile.txt", true);
 <?php
 
 function loginButtons(){
-
+    setIndexArrayFromFile();
     if( isset($_POST['userNameLogin']) ){
         login();
         return true;
@@ -60,7 +61,6 @@ function loginButtons(){
 }
 
 function login(){
-    // si ya esta en session solo redirigirlo
     if(isset( $_POST['userNameLogin']) ){
 
         $userName = $_POST['userNameLogin'];
@@ -70,13 +70,13 @@ function login(){
         $validPassword = checkPassword($userName, $userPassword);
 
     if($userExist){
-      //  if( $validPassword ){
+        if( $validPassword ){
             createSession($userName);
             redirectHome();
-      /*  }else{
+        }else{
             showFailedLoginForm();
         }
-*/
+
     }else{
         showFailedLoginForm();   
     }
@@ -91,23 +91,28 @@ function signIn(){
         $userName = $_POST['userNameSignIn'];
         $userPassword = $_POST['userPasswordSignIn'];
 
-        $userExist = checkUserFile($userName); 
+        $userExist = checkUserFile($userName);
+        $validPassword = checkPassword($userName, $userPassword); 
 
         if($userExist){
-            showLogInMessage($userName); // change the logic of the msg
+
+            if( $validPassword ){
+                createSession($userName);
+                redirectHome();
+            }else{
+                showFailedSignInPasswordForm();
+            }
+
+        }else{
+            createUser($userName, $userPassword); 
             createSession($userName); 
             redirectHome();
-        }else{
-       createUser($userName, $userPassword); 
-       createSession($userName); 
-       redirectHome();
         }
     }else{
         showFailedSignInForm(); 
         showSignInMessage($userName); // change the logic of the msg
     }
 }
-
 
 
 function checkUserFile($userName){ 
@@ -126,48 +131,96 @@ function checkUserFile($userName){
             return false;
         }  
 }
-/*
+
 function checkPassword($userName, $userPassword){
-    if (file_exists(INDEX_USER_FILE)) {
 
-        $position_file_info = getUserPosition(USER_FILE, $user);
-        //
-        if (file_exists(USER_FILE)) {
-            $usersFile = fopen(USER_FILE,'r') or die("Unable to open file!");
-            while(!feof($usersFile)){
-                $entry_array = fgets($usersFile); 
-                if(strpos($entry_array, $userName) !== false ){
-                    fclose($usersFile);
-                    return true;
-                }
-            }
-            fclose($usersFile);
-            return false; 
-        } else {
+    $userFilePassword = getFileUserPasswordByLimits($userName);
+    if( $userPassword == $userFilePassword){
+        return true;
+    }
+    return false;
+} 
+
+//--------------------------------------------------------------------
+
+function getFileUserPasswordByLimits($name){
+    global $indexUserFilesArray;
+    $file_path =  USER_FILE;
+    $limitsArray = getLimitsArray($name);
+    if(file_exists($file_path)){
+        $contactsFile = fopen($file_path,"r");
+        $isSuccess = fseek($contactsFile, $limitsArray[0]);
+        if($isSuccess == 0){
+            $lenght = $limitsArray[1] - $limitsArray[0];
+            $file_data = fread($contactsFile,$lenght);
+            $pass = explode(",",$file_data);
+            return $pass[1];
+        }
+        else{
             return false;
-        }  
+        }
 
-    }else{
+    }
+    else{
         return false;
     }
-}   $position_file_info = getSavedInformationPosition(USER_FILE, $file_info);
-
-function getUserPosition(USER_FILE, $user){
-
 }
-*/
+
+function getLimitsArray($name){
+    global $indexUserFilesArray;
+    $start = -1;
+    $finish = 0;
+
+    foreach($indexUserFilesArray as $item){
+        $dataArray = explode(",",$item);
+        $start = $finish;
+        $finish = $dataArray[1];
+        if($dataArray[0] == $name){
+            break;
+        }
+    }
+    $limits = array((int)$start,(int)$finish);
+    return $limits;
+}
+
+function setIndexArrayFromFile(){
+    global $indexUserFilesArray; 
+    $indexUserFilesArray = array();
+    $file_path = INDEX_USER_FILE;
+    if(!file_exists($file_path)){
+        return false;
+    }
+    else{
+        $indexFile = fopen($file_path,"r");
+        if(!$indexFile){
+            return false;
+        }
+        else{
+            $index = 0;
+            fseek($indexFile,$index*40);
+            $data = fread($indexFile,40);
+            while(!feof($indexFile)){
+                $indexUserFilesArray[$index] = $data;
+                $index++; 
+                fseek($indexFile,$index*40);
+                $data = fread($indexFile,40);
+            }
+            return true;
+        }
+    }
+}
+//--------------------------------------------------------------------
+
 function createSession($userName){ 
     session_start();
     $_SESSION["userName"] = $userName;
     echo  $_SESSION["userName"];
 }
 
-function  createUser($userName, $userPassword){ 
-    $data = str_pad( ($userName . ',' . $userPassword),40," ");
-    $wasUploadedSuccessfully = file_put_contents(USER_FILE ,$data, FILE_APPEND | LOCK_EX);
-    
-    $file_info = $userName; 
-    $position_file_info = getSavedInformationPosition(USER_FILE, $file_info);
+function  createUser($userName, $userPassword){
+
+    $data = ($userName . ',' . $userPassword);
+    $position_file_info = getSavedInformationPosition(USER_FILE, $data);// 
     $index_file_info_data = $userName . "," . $position_file_info;
     insertIndexintoFile($index_file_info_data);
 
@@ -191,9 +244,9 @@ function insertIndexintoFile($data){
     return ($indexWasSavedSuccessfully)? true : false;
 }
 
-function getSavedInformationPosition($file_txt_path,$file_data){
+function getSavedInformationPosition($file_txt_path,$file_data){ //cantidad de caracteres que se guardo nombre + password
     $informationWasSavedSuccessfully = file_put_contents($file_txt_path, $file_data, FILE_APPEND | LOCK_EX);
-    //xq lo inserta de nuevo? y guardo la posicion final o inicial?
+    //xq lo inserta de nuevo? y guarda el caracter final 
     return ($informationWasSavedSuccessfully)? filesize($file_txt_path) : false;
 }
 
@@ -275,6 +328,28 @@ function showFailedSignInForm(){
     <td> <input type="password" name="userPasswordLogin" id="userPasswordLogin" > </td>
     </tr>
     <tr><td class="failedLogin"> Failed to Sign In </td></tr>
+    <tr>
+    <td>  <input type="submit" value="Login"> <td>
+    </tr>
+    </table>
+    </form> ';
+}
+
+function showFailedSignInPasswordForm(){
+    echo '<form action="login.php" method="post"> 
+    <table name="loginTable" class="loginTable">
+    <tr>
+    <td> <label for="userNameLogin"> User </label> <td>
+    <td> <input name="userNameLogin" id="userNameLogin" > </td>
+    </tr>
+
+    <tr>
+    <td> <label for="userPasswordLogin"> Password </label> <td>
+    <td> <input type="password" name="userPasswordLogin" id="userPasswordLogin" > </td>
+    </tr>
+    <tr><td class="failedLogin"> Failed to Sign In, </td></tr>
+    <tr><td class="failedLogin"> The user already exists </td></tr>
+    <tr><td class="failedLogin"> and the password is incorrect </td></tr>
     <tr>
     <td>  <input type="submit" value="Login"> <td>
     </tr>

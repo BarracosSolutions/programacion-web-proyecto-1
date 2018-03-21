@@ -3,8 +3,88 @@
     define("USERNAME","omarseguvi");
     define("USER_INFORMATION_FILE","user_info_file.txt");
     define("INDEX_USER_INFORMATION_FILE","index_user_info_file.txt");
+    $indexUserFilesArray = array();
 
     init();
+
+    function setIndexArrayFromFile(){
+        global $indexUserFilesArray; 
+        $indexUserFilesArray = array();
+        $file_path = getUserPath() . "\\" . INDEX_USER_INFORMATION_FILE;
+        if(!file_exists($file_path)){
+            return false;
+        }
+        else{
+            $indexFile = fopen($file_path,"r");
+            if(!$indexFile){
+                return false;
+            }
+            else{
+                $index = 0;
+                fseek($indexFile,$index*40);
+                $data = fread($indexFile,40);
+                while(!feof($indexFile)){
+                    $indexUserFilesArray[$index] = $data;
+                    $index++; 
+                    fseek($indexFile,$index*40);
+                    $data = fread($indexFile,40);
+                }
+                return true;
+            }
+        }
+    }
+
+    function getFileUserInformationByLimits($name){
+        global $indexUserFilesArray;
+        $file_path = getUserPath() . "\\" . USER_INFORMATION_FILE;
+        $limitsArray = getLimitsArray($name);
+        if(file_exists($file_path)){
+            $contactsFile = fopen($file_path,"r");
+            $isSuccess = fseek($contactsFile, $limitsArray[0]);
+            if($isSuccess == 0){
+                $lenght = $limitsArray[1] - $limitsArray[0];
+                $file_data = fread($contactsFile,$lenght);
+                return $file_data;
+            }
+            else{
+                return false;
+            }
+
+        }
+        else{
+            return false;
+        }
+    }
+
+    function getLimitsArray($name){
+        global $indexUserFilesArray;
+        $start = -1;
+        $finish = 0;
+
+        foreach($indexUserFilesArray as $item){
+            $dataArray = explode(",",$item);
+            $start = $finish;
+            $finish = $dataArray[1];
+            if($dataArray[0] == $name){
+                break;
+            }
+        }
+        $limits = array((int)$start,(int)$finish);
+        return $limits;
+    }
+
+    function getCurrentFileIndexPos($filename){
+        global $indexUserFilesArray;
+        $index = 0;
+        foreach($indexUserFilesArray as $item){
+            $dataArray = explode(",",$item);
+            if($dataArray[0] == $filename){
+                return $index;
+            }
+            $index++;
+        }
+        return false;
+    }
 
     function getCurrentUserName(){
         if ( isset($_SESSION['userName']) ){
@@ -28,13 +108,35 @@
 
 
     function init(){
+        $result = setIndexArrayFromFile();
+
         if(isFileSubmitted()){
              saveFileInformation();
         }
+
+        if(isDeletedFileFormSubmitted()){
+            $file_name = $_POST["delete-file-name"];
+            $data_bundle = getFileUserInformationByLimits($file_name);
+            $data_array = explode(",",$data_bundle);
+            $indexPos = getCurrentFileIndexPos($data_array[0]);
+            global $indexUserFilesArray;
+            $index_data_bundle = $indexUserFilesArray[$indexPos];
+            
+        }
+
+
     }
 
     function isFileSubmitted(){
         return (isset($_FILES['userfile']['name']))? true : false;
+    }
+
+    function isDeletedFileFormSubmitted(){
+        return (isset($_POST['delete-file-name']))? true : false;
+    }
+
+    function isEditFileFormSubmitted(){
+        return (isset($_POST['edit-file-name']))? true : false;
     }
 
     function saveFileInformation(){
@@ -43,7 +145,8 @@
             $file_info = getConcatenatedFileInformationByCommasAsString($file_path);
             $file_txt_path = getUserPath() . "\\" . USER_INFORMATION_FILE;
             $position_file_info = getSavedInformationPosition($file_txt_path,$file_info);
-            $index_file_info_data = $_FILES['userfile']['name'] . "," . $position_file_info;
+            //Adding a bit at the end of data to notify that the data is active (Will help to delete records)
+            $index_file_info_data = $_FILES['userfile']['name'] . "," . $position_file_info . ",1";
             insertIndexintoFile($index_file_info_data);
         }
         else{
@@ -101,17 +204,48 @@
     }
 
     function showUserFiles(){
-        $directory_path = getFilePath();
-        $user_file_directory = opendir($directory_path);
+        setIndexArrayFromFile();
+        global $indexUserFilesArray;
         echo "<table>";
-        if($user_file_directory){
-            while (false !== ($file = readdir($user_file_directory))){
-                if ($file != "." && $file != "..") {
-                    echo "<td><tr>$file</tr></td></br>";
-                }
+        foreach($indexUserFilesArray as $item){
+            $dataArray = explode(",", $item);
+            if(strcmp($dataArray[2],"1")){ //Reads the isActive bit
+                $filename = $dataArray[0];
+                echo "<td><tr>$filename";
+                echo "<form method='POST' action='index.php'><input type='hidden' name='delete-file-name' value='$filename'><input class='delete-button' type='submit' value='X'></form>";
+                echo "<form method='POST' action='index.php'><input type='hidden' name='edit-file-name' value='$filename'><input class='edit-button' type='submit' value='Edit'></form>";
+                echo "</tr></td></br>";
             }
         }
         echo "</table>";
+    }
+
+    function showForm(){
+        if(isEditFileFormSubmitted()){
+            $file_name = $_POST['edit-file-name'];
+            $data_bundle = getFileUserInformationByLimits($file_name);
+            $data_array = explode(",",$data_bundle);
+            echo "<label for='author'>Author</label>";
+            echo "<input type='text' id='author' name='author' value='$data_array[1]'>";
+            echo "<label for='description'>Description</label>";
+            echo "<input type='text' id='description' name='description' value='$data_array[2]'>";
+            echo "<label for='clasification'>Clasification</label>";
+            echo "<input type='text' id='clasification' name='clasification' value='$data_array[3]'>";
+            echo "<label for='userfile'>Add file</label>";
+            echo "<input name='userfile' type='file' id='userfile'/> <br/>";
+            echo "<input type='submit' value='Save' />";
+        }
+        else{
+            echo "<label for='author'>Author</label>";
+            echo "<input type='text' id='author' name='author'>";
+            echo "<label for='description'>Description</label>";
+            echo "<input type='text' id='description' name='description'>";
+            echo "<label for='clasification'>Clasification</label>";
+            echo "<input type='text' id='clasification' name='clasification'>";
+            echo "<label for='userfile'>Add file</label>";
+            echo "<input name='userfile' type='file' id='userfile'/> <br/>";
+            echo "<input type='submit' value='Save' />";
+        }
     }
 ?>
 <!DOCTYPE html>
@@ -137,15 +271,9 @@
             <div class="content">
                 <section id="save-file">
                     <form enctype="multipart/form-data" method="post" action="index.php">
-                        <label for="author">Author</label>
-                        <input type="text" id="author" name="author">
-                        <label for="description">Description</label>
-                        <input type="text" id="description" name="description">
-                        <label for="clasification">Clasification</label>
-                        <input type="text" id="clasification" name="clasification">
-                        <label for="userfile">Add file</label>
-                        <input name="userfile" type="file" id="userfile"/> <br/>
-                        <input type="submit" value="Save" />
+                        <?php
+                            showForm();
+                        ?>
                     </form>
                 </section>
                 <aside id="show-files">

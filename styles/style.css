@@ -56,6 +56,20 @@ body {
   margin-top: 0;
   margin-bottom: 1%; }
 
+.edit-button {
+  background-color: #13393D;
+  color: #6ea3b8;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer; }
+
+.delete-button {
+  background-color: red;
+  color: black;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer; }
+
 /*# sourceMappingURL=style.css.map */
 
 /* || General setup */

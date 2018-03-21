@@ -35,7 +35,6 @@
     }
 
     function getFileUserInformationByLimits($name){
-        global $indexUserFilesArray;
         $file_path = getUserPath() . "\\" . USER_INFORMATION_FILE;
         $limitsArray = getLimitsArray($name);
         if(file_exists($file_path)){
@@ -65,7 +64,7 @@
             $dataArray = explode(",",$item);
             $start = $finish;
             $finish = $dataArray[1];
-            if($dataArray[0] == $name){
+            if($dataArray[0] == $name && $dataArray[2] == "1"){
                 break;
             }
         }
@@ -113,6 +112,9 @@
         if(isFileSubmitted()){
              saveFileInformation();
         }
+        else if(isEditFileNameFormSubmitted()){
+            saveEditedInformation();
+        }
 
         if(isDeletedFileFormSubmitted()){
             global $indexUserFilesArray;
@@ -120,26 +122,23 @@
             $file_data_bundle = getFileUserInformationByLimits($file_name);
             $file_data_array = explode(",",$file_data_bundle);
             $indexPos = getCurrentFileIndexPos($file_data_array[0]);
-            $index_data_bundle = $indexUserFilesArray[$indexPos];
-            $index_data_array = explode(",",$index_data_bundle);
-            //Update the index value with the bit is active as 0
-            $index_data_array[2] = 0;
-            $updated_index_data = $index_data_array[0] . "," . $index_data_array[1] . "," . $index_data_array[2];
-            $updated_index_data = str_pad($updated_index_data,40," ");
+            $updated_index_data = getUpdatedIndexDateByPosition($indexPos);
             //Deletes the file
             unlink($file_data_array[6]);
             //Re-writes the file with the new index information
             $file_path = getUserPath() . "\\" . INDEX_USER_INFORMATION_FILE;
-            if(file_exists($file_path)){
-                $indexFile = fopen($file_path,"r+");
-                if($indexFile){
-                    fseek($indexFile,$indexPos*40);
-                    fwrite($indexFile, $updated_index_data,40);
-                }
+            writeIndexFileUpdates($file_path,$indexPos,$updated_index_data);
+        }
+    }
+
+    function writeIndexFileUpdates($file_path,$indexPos,$data){
+        if(file_exists($file_path)){
+            $indexFile = fopen($file_path,"r+");
+            if($indexFile){
+                fseek($indexFile,$indexPos*40);
+                fwrite($indexFile, $data,40);
             }
         }
-
-
     }
 
     function isFileSubmitted(){
@@ -150,11 +149,54 @@
         return (isset($_POST['delete-file-name']))? true : false;
     }
 
-    function isEditFileFormSubmitted(){
+    function isEditButtonFormSubmitted(){
         return (isset($_POST['edit-file-name']))? true : false;
     }
 
+    function isEditFileNameFormSubmitted(){
+        return (isset($_POST["file-name"]))? true : false;
+    }
+
+    function saveEditedInformation(){
+            //Cannot edit a file uploaded in the form
+            //A file information was editted
+            $filename = $_POST["file-name"];
+            //get edited information provided by supplier
+            $editedInformation = getConcatanatedFileEditedInformationByCommaAsString($filename);
+            $file_data_bundle  = getFileUserInformationByLimits($filename);
+            $file_old_data_array = explode(",",$file_data_bundle);
+            $static_file_data_array = array_slice($file_old_data_array,4);
+            //
+            //Delete the current record
+            //
+            $indexPos = getCurrentFileIndexPos($file_old_data_array[0]);
+            $updated_index_data = getUpdatedIndexDateByPosition($indexPos);
+            $file_path = getUserPath() . "\\" . INDEX_USER_INFORMATION_FILE;
+            writeIndexFileUpdates($file_path,$indexPos,$updated_index_data);
+            //
+            //Insert at the end
+            //
+            $editedInformation = $editedInformation . $static_file_data_array[0] . ",". $static_file_data_array[1] . ",". $static_file_data_array[2];  
+            $file_txt_path = getUserPath() . "\\" . USER_INFORMATION_FILE;
+            $position_file_info = getSavedInformationPosition($file_txt_path,$editedInformation);
+            //Adding a bit at the end of data to notify that the data is active (Will help to delete records)
+            $index_file_info_data = $filename . "," . $position_file_info . ",1";
+            insertIndexintoFile($index_file_info_data);
+    }
+
+    function getUpdatedIndexDateByPosition($indexPos){
+        global $indexUserFilesArray;
+        $index_data_bundle = $indexUserFilesArray[$indexPos];
+        $index_data_array = explode(",",$index_data_bundle);
+        //Update the index value with the bit is active as 0
+        $index_data_array[2] = 0;
+        $updated_index_data = $index_data_array[0] . "," . $index_data_array[1] . "," . $index_data_array[2];
+        $updated_index_data = str_pad($updated_index_data,40," ");
+        return $updated_index_data;
+    }
+
     function saveFileInformation(){
+        //Preguntar si ya existe el file 
         $file_path = getFilePath() . $_FILES['userfile']['name'];
         if(move_uploaded_file($_FILES['userfile']['tmp_name'], $file_path)){
             $file_info = getConcatenatedFileInformationByCommasAsString($file_path);
@@ -207,6 +249,14 @@
         return ($informationWasSavedSuccessfully)? filesize($file_txt_path) : false;
     }
 
+    function getConcatanatedFileEditedInformationByCommaAsString($file_name){ //$file_name pos 0
+        $new_author = $_POST["author"]; //pos 1
+        $new_description = $_POST["description"]; //pos 2
+        $new_clasification = $_POST["clasification"]; //pos 3
+        $final_data = "$file_name,$new_author,$new_description,$new_clasification,";
+        return $final_data;
+    }
+
     function getConcatenatedFileInformationByCommasAsString($file_path){
         $name = $_FILES['userfile']['name']; //pos 0
         $author = $_POST["author"]; //pos 1
@@ -236,10 +286,11 @@
     }
 
     function showForm(){
-        if(isEditFileFormSubmitted()){
+        if(isEditButtonFormSubmitted()){
             $file_name = $_POST['edit-file-name'];
             $data_bundle = getFileUserInformationByLimits($file_name);
             $data_array = explode(",",$data_bundle);
+            echo "<input type='hidden' name='file-name' value='$data_array[0]'>";
             echo "<label for='author'>Author</label>";
             echo "<input type='text' id='author' name='author' value='$data_array[1]'>";
             echo "<label for='description'>Description</label>";
@@ -247,7 +298,7 @@
             echo "<label for='clasification'>Clasification</label>";
             echo "<input type='text' id='clasification' name='clasification' value='$data_array[3]'>";
             echo "<label for='userfile'>Add file</label>";
-            echo "<input name='userfile' type='file' id='userfile'/> <br/>";
+            echo "<input name='userfile' type='file' id='userfile' disabled/> <br/>";
             echo "<input type='submit' value='Save' />";
         }
         else{

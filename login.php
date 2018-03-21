@@ -65,18 +65,18 @@ function login(){
 
         $userName = $_POST['userNameLogin'];
         $userPassword = $_POST['userPasswordLogin'];
-        echo $userName;
+
         $userExist = checkUserFile($userName);
         $validPassword = checkPassword($userName, $userPassword);
 
     if($userExist){
-        if( $validPassword ){
+      //  if( $validPassword ){
             createSession($userName);
             redirectHome();
-        }else{
+      /*  }else{
             showFailedLoginForm();
         }
-
+*/
     }else{
         showFailedLoginForm();   
     }
@@ -111,11 +111,27 @@ function signIn(){
 
 
 function checkUserFile($userName){ 
-
+        if (file_exists(INDEX_USER_FILE)) {
+            $usersFile = fopen(INDEX_USER_FILE,'r') or die("Unable to open file!");
+            while(!feof($usersFile)){
+                $entry_array = fgets($usersFile); 
+                if(strpos($entry_array, $userName) !== false ){
+                    fclose($usersFile);
+                    return true;
+                }
+            }
+            fclose($usersFile);
+            return false; 
+        } else {
+            return false;
+        }  
+}
+/*
+function checkPassword($userName, $userPassword){
     if (file_exists(INDEX_USER_FILE)) {
 
-
-
+        $position_file_info = getUserPosition(USER_FILE, $user);
+        //
         if (file_exists(USER_FILE)) {
             $usersFile = fopen(USER_FILE,'r') or die("Unable to open file!");
             while(!feof($usersFile)){
@@ -124,7 +140,6 @@ function checkUserFile($userName){
                     fclose($usersFile);
                     return true;
                 }
-                
             }
             fclose($usersFile);
             return false; 
@@ -135,12 +150,12 @@ function checkUserFile($userName){
     }else{
         return false;
     }
+}   $position_file_info = getSavedInformationPosition(USER_FILE, $file_info);
 
+function getUserPosition(USER_FILE, $user){
 
-   
 }
-    
-
+*/
 function createSession($userName){ 
     session_start();
     $_SESSION["userName"] = $userName;
@@ -148,11 +163,10 @@ function createSession($userName){
 }
 
 function  createUser($userName, $userPassword){ 
-    echo ($userName . $userPassword);
     $data = str_pad( ($userName . ',' . $userPassword),40," ");
     $wasUploadedSuccessfully = file_put_contents(USER_FILE ,$data, FILE_APPEND | LOCK_EX);
     
-    $file_info = $userName; //getConcatenatedFileInformationByCommasAsString($file_path);
+    $file_info = $userName; 
     $position_file_info = getSavedInformationPosition(USER_FILE, $file_info);
     $index_file_info_data = $userName . "," . $position_file_info;
     insertIndexintoFile($index_file_info_data);
@@ -179,6 +193,7 @@ function insertIndexintoFile($data){
 
 function getSavedInformationPosition($file_txt_path,$file_data){
     $informationWasSavedSuccessfully = file_put_contents($file_txt_path, $file_data, FILE_APPEND | LOCK_EX);
+    //xq lo inserta de nuevo? y guardo la posicion final o inicial?
     return ($informationWasSavedSuccessfully)? filesize($file_txt_path) : false;
 }
 

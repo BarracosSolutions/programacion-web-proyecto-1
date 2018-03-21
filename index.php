@@ -115,13 +115,28 @@
         }
 
         if(isDeletedFileFormSubmitted()){
-            $file_name = $_POST["delete-file-name"];
-            $data_bundle = getFileUserInformationByLimits($file_name);
-            $data_array = explode(",",$data_bundle);
-            $indexPos = getCurrentFileIndexPos($data_array[0]);
             global $indexUserFilesArray;
+            $file_name = $_POST["delete-file-name"];
+            $file_data_bundle = getFileUserInformationByLimits($file_name);
+            $file_data_array = explode(",",$file_data_bundle);
+            $indexPos = getCurrentFileIndexPos($file_data_array[0]);
             $index_data_bundle = $indexUserFilesArray[$indexPos];
-            
+            $index_data_array = explode(",",$index_data_bundle);
+            //Update the index value with the bit is active as 0
+            $index_data_array[2] = 0;
+            $updated_index_data = $index_data_array[0] . "," . $index_data_array[1] . "," . $index_data_array[2];
+            $updated_index_data = str_pad($updated_index_data,40," ");
+            //Deletes the file
+            unlink($file_data_array[6]);
+            //Re-writes the file with the new index information
+            $file_path = getUserPath() . "\\" . INDEX_USER_INFORMATION_FILE;
+            if(file_exists($file_path)){
+                $indexFile = fopen($file_path,"r+");
+                if($indexFile){
+                    fseek($indexFile,$indexPos*40);
+                    fwrite($indexFile, $updated_index_data,40);
+                }
+            }
         }
 
 
@@ -209,7 +224,7 @@
         echo "<table>";
         foreach($indexUserFilesArray as $item){
             $dataArray = explode(",", $item);
-            if(strcmp($dataArray[2],"1")){ //Reads the isActive bit
+            if(strcmp($dataArray[2],"1") !== -1){ //Reads the isActive bit
                 $filename = $dataArray[0];
                 echo "<td><tr>$filename";
                 echo "<form method='POST' action='index.php'><input type='hidden' name='delete-file-name' value='$filename'><input class='delete-button' type='submit' value='X'></form>";

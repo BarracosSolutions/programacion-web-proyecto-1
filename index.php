@@ -276,7 +276,7 @@
             $dataArray = explode(",", $item);
             if(strcmp($dataArray[2],"1") !== -1){ //Reads the isActive bit
                 $filename = $dataArray[0];
-                echo "<td><tr>$filename";
+                echo "<td><tr><a class='downloaded-file' href='$filename' download> $filename </a>";
                 echo "<form method='POST' action='index.php'><input type='hidden' name='delete-file-name' value='$filename'><input class='delete-button' type='submit' value='X'></form>";
                 echo "<form method='POST' action='index.php'><input type='hidden' name='edit-file-name' value='$filename'><input class='edit-button' type='submit' value='Edit'></form>";
                 echo "</tr></td></br>";

@@ -52,6 +52,11 @@ body {
   #save-file input[type=submit]:hover {
     background-color: #13393D; }
 
+.downloaded-file{
+  color: #b2ced9;
+  text-decoration: none;
+}
+
 #show-files p {
   margin-top: 0;
   margin-bottom: 1%; }
@@ -69,6 +74,7 @@ body {
   border: none;
   border-radius: 4px;
   cursor: pointer; }
+
 
 /*# sourceMappingURL=style.css.map */
 

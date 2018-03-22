@@ -214,3 +214,23 @@ footer {
 .failedLogin{
   color: red;
 }
+
+article {
+  width: 100%;
+  text-align: center;
+}
+
+#main-index {
+  width: 100%;
+  text-align: center;
+}
+
+a{
+  color: #b2ced9;   
+  text-decoration: none;
+}
+
+ul{
+  list-style-type: none;
+  color: white;
+}
